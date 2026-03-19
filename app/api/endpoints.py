@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import crud, schemas, utils
 from ..database import get_db
-import subprocess
 
 router = APIRouter()
 
@@ -28,9 +27,9 @@ def wake_device(device_id: int, db: Session = Depends(get_db)):
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
     
-    # Execute the WOL script
+    # Execute the WOL implementation
     try:
         output = utils.send_wol_packet(device.mac, device.ip)
         return {"message": f"WOL packet sent to {device.name}", "output": output}
-    except subprocess.CalledProcessError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to send WOL packet: {e.stderr}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send WOL packet: {str(e)}")
