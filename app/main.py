@@ -9,6 +9,12 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager, contextmanager
 
+import logging
+
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # 全局变量来存储设备状态
 device_statuses = {}
 
@@ -20,11 +26,18 @@ Base.metadata.create_all(bind=engine)
 
 # 后台任务，用于定期检查设备状态
 def check_devices_status():
+    logger.info("开始检查设备在线状态...")
     with contextmanager(get_db)() as db:
         devices = crud.get_devices(db)
+        if not devices:
+            logger.info("数据库中没有设备，跳过检查。")
+            return
+        
         for device in devices:
             status = utils.is_device_online(device.ip)
             device_statuses[device.id] = status
+            logger.info(f"设备 {device.name} (ID: {device.id}) 的在线状态: {'在线' if status else '离线'}")
+    logger.info("设备在线状态检查完成。")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
