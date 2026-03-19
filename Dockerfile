@@ -5,8 +5,7 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # 安装必要的运行时依赖
-RUN apt-get update && apt-get install -y \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y iputils-ping && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件并安装
 COPY requirements.txt .
