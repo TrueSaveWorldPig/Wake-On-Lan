@@ -79,13 +79,13 @@ def wake_device(device_id: int, db: Session = Depends(get_db)):
     
     # Execute the WOL script
     try:
-        # Use broadcast 255.255.255.255 by default, or specific IP if provided
-        broadcast = "255.255.255.255"
-        # If user wants to target specific IP broadcast, they can specify it
-        # For now we use global broadcast as in the script's default
+        # Construct the command
+        cmd = ["bash", "wol.sh", device.mac]
+        if device.ip:
+            cmd.append(device.ip)
         
         result = subprocess.run(
-            ["bash", "wol.sh", device.mac, broadcast],
+            cmd,
             capture_output=True,
             text=True,
             check=True
