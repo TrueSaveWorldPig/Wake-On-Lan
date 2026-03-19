@@ -43,15 +43,27 @@
 ## 📂 项目结构
 
 ```text
-.
-├── main.py              # FastAPI 后端程序，提供 API 接口
-├── wol.sh               # WOL 核心脚本，负责构造和发送魔法包
-├── templates/
-│   └── index.html       # 前端 Web 页面
-├── static/              # 静态资源目录
-├── Dockerfile           # Docker 构建文件
-├── docker-compose.yml   # Docker Compose 配置文件
-└── requirements.txt     # Python 依赖列表
+Wake-On-Lan/
+├── app/
+│   ├── api/
+│   │   ├── __init__.py      # API 路由导出
+│   │   └── endpoints.py     # API 具体路由实现
+│   ├── __init__.py
+│   ├── crud.py              # 数据库增删改查逻辑
+│   ├── database.py          # 数据库连接与 Session 配置
+│   ├── main.py              # FastAPI 应用初始化与中间件配置
+│   ├── models.py            # SQLAlchemy 数据库模型
+│   ├── schemas.py           # Pydantic 数据验证模型
+│   └── utils.py             # 工具函数（如发送 WOL 数据包）
+├── scripts/
+│   └── wol.sh               # WOL 原始脚本，负责构造和发送魔法包
+├── static/                  # 静态资源目录
+├── templates/               # Jinja2 模板目录
+│   └── index.html           # 前端 Web 页面
+├── main.py                  # 项目入口启动脚本
+├── Dockerfile               # Docker 构建文件
+├── docker-compose.yml       # Docker Compose 配置文件
+└── requirements.txt         # Python 依赖列表
 ```
 
 ## ⚠️ 注意事项
