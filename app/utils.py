@@ -3,6 +3,10 @@ import struct
 import os
 import platform
 import subprocess
+import logging
+
+# 配置日志
+logger = logging.getLogger(__name__)
 
 def send_wol_packet(mac: str, ip: str = None):
     """
@@ -33,13 +37,33 @@ def is_device_online(ip: str) -> bool:
     if not ip:
         return False
     
-    # 根据操作系统选择 ping 参数
-    param = '-n' if platform.system().lower() == 'windows' else '-c'
-    command = ['ping', param, '1', '-W', '1', ip]
+    system_type = platform.system().lower()
+    
+    # 默认超时设置
+    timeout_val = "1"
+    
+    if system_type == 'windows':
+        # Windows: -n 1, -w 1000 (ms)
+        command = ['ping', '-n', '1', '-w', '1000', ip]
+    elif system_type == 'darwin':
+        # macOS: -c 1, -W 1000 (ms) 或 -t 1 (s)
+        # 这里使用 -W 1000 表示等待 1000 毫秒
+        command = ['ping', '-c', '1', '-W', '1000', ip]
+    else:
+        # Linux 和其他: -c 1, -W 1 (s)
+        command = ['ping', '-c', '1', '-W', '1', ip]
     
     # 执行命令并返回状态
     try:
-        subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # logger.debug(f"Executing ping command: {' '.join(command)}")
+        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=2)
         return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.TimeoutExpired:
+        logger.warning(f"Ping command timed out for IP: {ip}")
+        return False
+    except subprocess.CalledProcessError:
+        # ping 失败通常意味着设备不在线
+        return False
+    except Exception as e:
+        logger.error(f"Error while pinging {ip}: {str(e)}")
         return False
