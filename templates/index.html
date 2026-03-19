@@ -1,1 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wake On LAN 管理工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .device-card {
+            transition: transform 0.2s;
+        }
+        .device-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-blue-600 mb-2">Wake On LAN</h1>
+            <p class="text-gray-600">管理并远程唤醒您的设备</p>
+        </header>
 
+        <!-- 添加设备表单 -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-10 max-w-2xl mx-auto">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">添加新设备</h2>
+            <form id="add-device-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">设备名称</label>
+                    <input type="text" id="name" name="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">MAC 地址</label>
+                    <input type="text" id="mac" name="mac" placeholder="XX:XX:XX:XX:XX:XX" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">IP 地址 (可选)</label>
+                    <input type="text" id="ip" name="ip" placeholder="192.168.1.10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                </div>
+                <div class="md:col-span-3">
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition">添加设备</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 设备列表 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="device-list">
+            <!-- 动态生成内容 -->
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed bottom-5 right-5 hidden bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+        <span id="toast-message">操作成功</span>
+    </div>
+
+    <script>
+        // 加载设备列表
+        async function loadDevices() {
+            try {
+                const response = await fetch('/api/devices');
+                const devices = await response.json();
+                const list = document.getElementById('device-list');
+                list.innerHTML = '';
+
+                devices.forEach(device => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-lg shadow-md p-6 device-card';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800">${device.name}</h3>
+                                <p class="text-sm text-gray-500 font-mono">${device.mac}</p>
+                                <p class="text-sm text-gray-400">${device.ip || '无 IP'}</p>
+                            </div>
+                            <button onclick="deleteDevice(${device.id})" class="text-red-500 hover:text-red-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        <button onclick="wakeDevice(${device.id}, '${device.name}')" class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600 transition flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                            </svg>
+                            唤醒设备
+                        </button>
+                    `;
+                    list.appendChild(card);
+                });
+            } catch (error) {
+                showToast('加载设备失败', 'bg-red-500');
+            }
+        }
+
+        // 添加设备
+        document.getElementById('add-device-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = {
+                name: document.getElementById('name').value,
+                mac: document.getElementById('mac').value,
+                ip: document.getElementById('ip').value || null
+            };
+
+            try {
+                const response = await fetch('/api/devices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    showToast('添加成功');
+                    e.target.reset();
+                    loadDevices();
+                } else {
+                    showToast('添加失败', 'bg-red-500');
+                }
+            } catch (error) {
+                showToast('添加失败', 'bg-red-500');
+            }
+        });
+
+        // 删除设备
+        async function deleteDevice(id) {
+            if (!confirm('确定要删除这个设备吗？')) return;
+
+            try {
+                const response = await fetch(`/api/devices/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showToast('删除成功');
+                    loadDevices();
+                }
+            } catch (error) {
+                showToast('删除失败', 'bg-red-500');
+            }
+        }
+
+        // 唤醒设备
+        async function wakeDevice(id, name) {
+            try {
+                const response = await fetch(`/api/wake/${id}`, { method: 'POST' });
+                const data = await response.json();
+                if (response.ok) {
+                    showToast(`已向 ${name} 发送唤醒信号`);
+                } else {
+                    showToast(data.detail || '唤醒失败', 'bg-red-500');
+                }
+            } catch (error) {
+                showToast('唤醒失败', 'bg-red-500');
+            }
+        }
+
+        // Toast 提示
+        function showToast(message, bgColor = 'bg-green-500') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            toast.className = `fixed bottom-5 right-5 text-white px-6 py-3 rounded-lg shadow-lg z-50 ${bgColor}`;
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 初始化
+        loadDevices();
+    </script>
+</body>
+</html>
