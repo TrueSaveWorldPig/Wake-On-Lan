@@ -1,0 +1,11 @@
+services:
+  wake-on-lan:
+    build: .
+    container_name: wake-on-lan
+    # WOL 建议使用 host 网络模式，以确保能够正确发送广播包到局域网
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - ./devices.db:/app/devices.db
+    environment:
+      - TZ=Asia/Shanghai
