@@ -4,8 +4,9 @@
 
 ## 🌟 主要功能
 
-- **设备管理**: 支持添加、查看和删除局域网内的设备（名称、MAC 地址、IP 地址）。
+- **设备管理**: 支持添加、查看和删除局域网内的设备（名称、MAC 地址和 IP 地址均为必填项）。
 - **一键唤醒**: 在 Web 界面一键向指定设备发送 WOL 魔法包。
+- **设备在线状态检测**: 定期轮询设备，并在 UI 上实时显示设备的在线状态。
 - **持久化存储**: 使用 SQLite 数据库保存设备信息，重启不丢失。
 - **Docker 支持**: 提供 Dockerfile 和 docker-compose 配置文件，一键部署。
 - **现代化 UI**: 基于 Tailwind CSS 构建的简洁、响应式前端界面。
@@ -27,7 +28,6 @@
 
 1. **环境准备**:
    - Python 3.10+
-   - 安装系统依赖 (仅 Linux/macOS): `nc` (netcat) 和 `xxd` (用于执行 WOL 脚本)。
 
 2. **安装 Python 依赖**:
    ```bash
@@ -36,7 +36,7 @@
 
 3. **启动服务**:
    ```bash
-   python3 main.py
+   uvicorn app.main:app --reload
    ```
 4. 访问浏览器：`http://localhost:8000`
 
@@ -46,24 +46,21 @@
 Wake-On-Lan/
 ├── app/
 │   ├── api/
-│   │   ├── __init__.py      # API 路由导出
-│   │   └── endpoints.py     # API 具体路由实现
+│   │   ├── __init__.py
+│   │   └── endpoints.py
 │   ├── __init__.py
-│   ├── crud.py              # 数据库增删改查逻辑
-│   ├── database.py          # 数据库连接与 Session 配置
-│   ├── main.py              # FastAPI 应用初始化与中间件配置
-│   ├── models.py            # SQLAlchemy 数据库模型
-│   ├── schemas.py           # Pydantic 数据验证模型
-│   └── utils.py             # 工具函数（如发送 WOL 数据包）
-├── scripts/
-│   └── wol.sh               # WOL 原始脚本，负责构造和发送魔法包
-├── static/                  # 静态资源目录
-├── templates/               # Jinja2 模板目录
-│   └── index.html           # 前端 Web 页面
-├── main.py                  # 项目入口启动脚本
-├── Dockerfile               # Docker 构建文件
-├── docker-compose.yml       # Docker Compose 配置文件
-└── requirements.txt         # Python 依赖列表
+│   ├── crud.py
+│   ├── database.py
+│   ├── main.py
+│   ├── models.py
+│   ├── schemas.py
+│   └── utils.py
+├── static/
+├── templates/
+│   └── index.html
+├── Dockerfile
+├── docker-compose.yml
+└── requirements.txt
 ```
 
 ## ⚠️ 注意事项
@@ -74,6 +71,6 @@ Wake-On-Lan/
 
 ## 🛠️ 技术栈
 
-- **后端**: FastAPI, SQLAlchemy (SQLite), Pydantic
+- **后端**: FastAPI, SQLAlchemy (SQLite), Pydantic, APScheduler
 - **前端**: Tailwind CSS, JavaScript (Fetch API)
 - **容器化**: Docker, Docker Compose

@@ -22,4 +22,4 @@ RUN mkdir -p static templates
 EXPOSE 8000
 
 # 运行应用
-CMD ["python", "main.py"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

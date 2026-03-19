@@ -6,4 +6,4 @@ class DeviceDB(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     mac = Column(String)
-    ip = Column(String, nullable=True)
+    ip = Column(String, nullable=False)

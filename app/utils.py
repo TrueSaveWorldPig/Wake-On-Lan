@@ -1,6 +1,8 @@
 import socket
 import struct
 import os
+import platform
+import subprocess
 
 def send_wol_packet(mac: str, ip: str = None):
     """
@@ -23,3 +25,21 @@ def send_wol_packet(mac: str, ip: str = None):
         sock.sendto(data, (broadcast_ip, 9))
     
     return f"Sent WOL magic packet to {mac} via {broadcast_ip}:9"
+
+def is_device_online(ip: str) -> bool:
+    """
+    使用 ping 命令检查设备是否在线。
+    """
+    if not ip:
+        return False
+    
+    # 根据操作系统选择 ping 参数
+    param = '-n' if platform.system().lower() == 'windows' else '-c'
+    command = ['ping', param, '1', '-W', '1', ip]
+    
+    # 执行命令并返回状态
+    try:
+        subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
